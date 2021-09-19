@@ -110,7 +110,7 @@ namespace Show
      where
       show' : List a -> String
       show' []        = ""
-      show' (x :: xs) = show' xs ++ "\n" ++ show x
+      show' (x :: xs) = "\n" ++ show x ++ show' xs
 
 main : IO ()
 main = do
