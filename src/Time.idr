@@ -1,6 +1,5 @@
 module Time
 
-
 import Data.String
 import Data.Nat
 import Data.Fin
@@ -9,9 +8,9 @@ import Data.List
 import Data.Either
 import Data.Maybe
 
-import Text.Parser
-import Text.Parser.Util
+import Text.Parser.CharUtil
 
+import System
 import System.File
 
 -- HH:MM
@@ -26,7 +25,7 @@ record TimeInterval where
   start : TimeUnit
   end : TimeUnit
 
-twoDigitNat : Parser Nat
+twoDigitNat : CharParser Nat
 twoDigitNat = do
   d0 <- digit
   d1 <- digit
@@ -34,7 +33,7 @@ twoDigitNat = do
 
 ||| Discards whitespace.
 ||| N:N
-parseTimeUnit : Parser TimeUnit
+parseTimeUnit : CharParser TimeUnit
 parseTimeUnit = do
   a <- twoDigitNat
   ignore $ many space
@@ -43,7 +42,7 @@ parseTimeUnit = do
   b <- twoDigitNat
   pure (MkTimeUnit (cast a) (cast b))
 
-parseTimeInterval : Parser TimeInterval
+parseTimeInterval : CharParser TimeInterval
 parseTimeInterval = do
   s <- parseTimeUnit
   ignore $ many space
@@ -52,13 +51,16 @@ parseTimeInterval = do
   e <- parseTimeUnit
   pure (MkTimeInterval s e)
 
-parseBlock : Parser (List1 TimeInterval)
+parseBlock : CharParser (List1 TimeInterval)
 parseBlock = do
   sepBy1 newline parseTimeInterval
 
-parseFile : Parser (List1 (List1 TimeInterval))
+parseFile : CharParser (List1 (List1 TimeInterval))
 parseFile = do
-  sepBy1 (newline *> newline *> many newline) parseBlock
+  ignore $ many space
+  r <- sepBy1 (newline *> newline *> many newline) parseBlock
+  ignore $ many (space <|> newline)
+  pure r
 
 asymmetricDif : Integer -> Integer -> Integer -> (Bool, Integer)
 asymmetricDif x y m =
@@ -138,14 +140,19 @@ unlines = pack . unlines' . map unpack
 
 main : IO ()
 main = do
-  fileName <- getLine
+  [_, fileName] <- getArgs
+    | _ => do
+      putStrLn "Usage: time <file>"
+      exitFailure
   Right str <- readFile fileName
     | Left err => putStrLn (show err)
   let ls = lines str
   let ls = filter lineFilter ls
   let string = unlines ls
   putStrLn $ "Intervals:\n" ++ string
-  putStrLn "------"
+  putStrLn "---------------------------------------------"
+  putStrLn "----------------- RESULTS -------------------"
+  putStrLn "---------------------------------------------"
   let Right blocks = eFile string
     | Left err => putStrLn ("Error: " ++ err)
   let computed = map computeBlock blocks
