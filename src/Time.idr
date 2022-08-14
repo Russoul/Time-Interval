@@ -52,6 +52,14 @@ parseTimeInterval = do
   e <- parseTimeUnit
   pure (MkTimeInterval s e)
 
+parseBlock : Parser (List1 TimeInterval)
+parseBlock = do
+  sepBy1 newline parseTimeInterval
+
+parseFile : Parser (List1 (List1 TimeInterval))
+parseFile = do
+  sepBy1 (newline *> newline *> many newline) parseBlock
+
 asymmetricDif : Integer -> Integer -> Integer -> (Bool, Integer)
 asymmetricDif x y m =
   case (x <= y) of
@@ -87,11 +95,12 @@ eTimeInterval : String -> Either String TimeInterval
 eTimeInterval str =
   mapFst (const "Can't parse '\{str}'") (parseFull' parseTimeInterval str)
 
+eFile : String -> Either String (List1 (List1 TimeInterval))
+eFile str =
+  mapFst (const "Can't parse '\{str}'") (parseFull' parseFile str)
+
 lineFilter : String -> Bool
-lineFilter x = x /= ""
-            && x /= "\n"
-            && x /= "\r"
-            && not (isPrefixOf "//" x)
+lineFilter x = not (isPrefixOf "//" x)
             && not (isPrefixOf "--" x)
 
 
@@ -112,6 +121,21 @@ namespace Show
       show' []        = ""
       show' (x :: xs) = "\n" ++ show x ++ show' xs
 
+computeBlock : List1 TimeInterval -> TimeUnit
+computeBlock = foldr1 sum . map intervalDif
+
+%hide unlines
+
+export
+unlines' : List (List Char) -> List Char
+unlines' [] = []
+unlines' [l] = l
+unlines' (l0 :: l1 :: ls) = l0 ++ '\n' :: unlines' (l1 :: ls)
+
+export
+unlines : List String -> String
+unlines = pack . unlines' . map unpack
+
 main : IO ()
 main = do
   fileName <- getLine
@@ -119,12 +143,12 @@ main = do
     | Left err => putStrLn (show err)
   let ls = lines str
   let ls = filter lineFilter ls
-  putStrLn $ "Intervals:\n" ++ show @{NLSepList @{Id}} ls
-  let ds =
-       do ds <- for ls $ \l => do
-             i <- eTimeInterval l
-             Right (intervalDif i)
-          Right $ foldr sum (MkTimeUnit 0 0) ds
-  case ds of
-    Left x => putStrLn ("Error: " ++ x)
-    Right ds => putStrLn ("Total: " ++ show ds)
+  let string = unlines ls
+  putStrLn $ "Intervals:\n" ++ string
+  putStrLn "------"
+  let Right blocks = eFile string
+    | Left err => putStrLn ("Error: " ++ err)
+  let computed = map computeBlock blocks
+  for_ computed $ do \s => do
+    putStrLn (show s)
+  putStrLn ("Total: " ++ show (foldr1 sum computed))
