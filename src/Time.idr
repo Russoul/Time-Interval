@@ -55,10 +55,10 @@ parseBlock : CharParser (List1 TimeInterval)
 parseBlock = do
   sepBy1 newline parseTimeInterval
 
-parseFile : CharParser (List1 (List1 TimeInterval))
+parseFile : CharParser (List (List1 TimeInterval))
 parseFile = do
   ignore $ many space
-  r <- sepBy1 (newline *> newline *> many newline) parseBlock
+  r <- sepBy (newline *> newline *> many newline) parseBlock
   ignore $ many (space <|> newline)
   pure r
 
@@ -89,6 +89,9 @@ public export
 Show TimeUnit where
   show (MkTimeUnit a b) = showPadTwo a ++ ":" ++ showPadTwo b
 
+zero : TimeUnit
+zero = MkTimeUnit 0 0
+
 public export
 Show TimeInterval where
   show (MkTimeInterval a b) = show a ++ "-" ++ show b
@@ -97,7 +100,7 @@ eTimeInterval : String -> Either String TimeInterval
 eTimeInterval str =
   mapFst (const "Can't parse '\{str}'") (parseFull' parseTimeInterval str)
 
-eFile : String -> Either String (List1 (List1 TimeInterval))
+eFile : String -> Either String (List (List1 TimeInterval))
 eFile str =
   mapFst (const "Can't parse '\{str}'") (parseFull' parseFile str)
 
@@ -158,4 +161,4 @@ main = do
   let computed = map computeBlock blocks
   for_ computed $ do \s => do
     putStrLn (show s)
-  putStrLn ("Total: " ++ show (foldr1 sum computed))
+  putStrLn ("Total: " ++ show (foldr sum zero computed))
