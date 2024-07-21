@@ -66,7 +66,6 @@ export
 digits : Parser s (List1 Digit)
 digits = some digit
 
-
 littleEndianBase10ToNat : List Digit -> Nat
 littleEndianBase10ToNat [] = 0
 littleEndianBase10ToNat (x :: xs) = finToNat x + 10 * littleEndianBase10ToNat xs
@@ -80,6 +79,15 @@ public export
 nat : Parser s Nat
 nat = map (cast @{BigEndianBase10}) digits
 
+||| A two-digit base-10 natural number.
+||| Leading zeros are allowed.
+export
+twoDigitNat : CharParser Nat
+twoDigitNat = do
+  d0 <- digit
+  d1 <- digit
+  pure (10 * finToNat d0 + finToNat d1)
+
 export
 alphaNum : Parser s Char
 alphaNum = terminal "alphanumeric" (\x => toMaybe (isAlphaNum x) x)
@@ -87,10 +95,6 @@ alphaNum = terminal "alphanumeric" (\x => toMaybe (isAlphaNum x) x)
 export
 space : Parser s ()
 space = terminal "space" (\x => ignore $ toMaybe (x == ' ') x)
-
-export
-spaceLike : Parser s ()
-spaceLike = space
 
 ||| Parse an exact char. Case-sensetive.
 export
@@ -102,10 +106,10 @@ export
 char_ : Char -> Parser s ()
 char_ = ignore . char
 
-||| Parse anything but the given char.
+||| Parse a chacter such that condition holds
 export
-notChar : Char -> Parser s Char
-notChar c = terminal "notChar" (\x => toMaybe (x /= c) x)
+such : (Char -> Bool) -> Parser s Char
+such cond = terminal "notChar" (\x => toMaybe (cond x) x)
 
 ||| Parse one char from the list.
 ||| Prefer ones closer to the head of the list.
@@ -154,30 +158,37 @@ strLike c =
     x :: xs => toString $
       seqList1 (map charLike (x ::: xs))
 
-||| Run the parser on the list of tokens,
+||| ASCII printable characters and newline
+asciiTokenMap : TokenMap Char
+asciiTokenMap = [(pred (== '\n'), const '\n')] ++ [(pred (== chr i), const (chr i)) | i <- [32..126]]
+
+||| Run the parser on the string,
 ||| expecting full consumption of the input.
 export
-parseFull : (act : Grammar () tok ty)
-         -> (xs : List tok)
-         -> Either (List1 (ParsingError tok ())) ty
-parseFull act xs = do
-  (x, []) <- parse act (map irrelevantBounds xs)
-    | (x, toks@(_ :: _)) => Left (singleton $ Error "Some input left unconsumed" () Nothing)
-  Right x
+parseAll : (act : Grammar () Char ty)
+        -> (xs : String)
+        -> Either (List1 (ParsingError Char ())) ty
+parseAll act xs =
+  let (toks, (l, c, rest)) = lex asciiTokenMap xs in
+  case rest of
+    "" => parseAll act toks
+    _ => Left
+          $ singleton
+          $ Error
+              "Unrecognised character (only printable ASCII are supported and newline symbols are supported)"
+              ()
+              (Just (MkBounds l c l c))
+
 
 export
-parseFull' : (act : Grammar () Char ty)
-          -> (xs : String)
-          --        vvvvvv Error Msg
-          -> Either String ty
-parseFull' act xs =
-  mapFst (\(Error str () tok ::: _) => str) $
-    parseFull act (fastUnpack xs)
+parseAllFirstError : (act : Grammar () Char ty)
+                  -> (xs : String)
+                  -> Either (ParsingError Char ()) ty
+parseAllFirstError act xs =
+  mapFst head $ parseAll act xs
 
 export
 mbParseAll : (act : Grammar () Char ty)
           -> (xs : String)
           -> Maybe ty
-mbParseAll act xs = eitherToMaybe $
-  mapFst (\(Error str () tok ::: _) => str) $
-    parseFull act (fastUnpack xs)
+mbParseAll act xs = eitherToMaybe $ parseAll act xs

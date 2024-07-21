@@ -357,6 +357,17 @@ parseWith st act xs
            Failure _ _ errs => Left errs
            Res s _ v rest => Right (s, v.val, rest)
 
+||| Run the parser on the list of tokens,
+||| expecting full consumption of the input.
+export
+parseAll : (act : Grammar () tok ty)
+        -> (xs : List (WithBounds tok))
+        -> Either (List1 (ParsingError tok ())) ty
+parseAll act xs = do
+  (x, []) <- parse act xs
+    | (x, toks@(next :: _)) => Left (singleton $ Error "Some input left unconsumed" () (Just $ bounds next))
+  Right x
+
 -----------------------------------------
 ----------- Library code ----------------
 -----------------------------------------

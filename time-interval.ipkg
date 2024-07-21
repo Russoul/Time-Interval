@@ -1,44 +1,7 @@
 package time-interval
--- version =
-authors = "Russoul"
--- maintainers =
--- license =
--- brief =
--- readme =
--- homepage =
--- sourceloc =
--- bugtracker =
 
--- packages to add to search path
-depends = contrib
-
--- modules to install
--- modules =
-
--- main file (i.e. file to load at REPL)
-main = Time
-
--- name of executable
+authors    = "Russoul"
+depends    = contrib
+main       = Time.Application
 executable = time-interval
--- opts =
-sourcedir = "src"
--- builddir =
--- outputdir =
-
--- script to run before building
--- prebuild =
-
--- script to run after building
--- postbuild =
-
--- script to run after building, before installing
--- preinstall =
-
--- script to run after installing
--- postinstall =
-
--- script to run before cleaning
--- preclean =
-
--- script to run after cleaning
--- postclean =
+sourcedir  = "src"
