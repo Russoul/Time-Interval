@@ -1,4 +1,4 @@
-module Time.Common
+module Me.Russoul.Time.Common
 
 namespace Show
   namespace Str

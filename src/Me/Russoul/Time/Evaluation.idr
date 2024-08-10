@@ -1,8 +1,8 @@
-module Time.Evaluation
+module Me.Russoul.Time.Evaluation
 
 import Data.List1
 
-import Time.Definition
+import Me.Russoul.Time.Definition
 
 asymmetricDif : Integer -> Integer -> Integer -> (Bool, Integer)
 asymmetricDif x y m =

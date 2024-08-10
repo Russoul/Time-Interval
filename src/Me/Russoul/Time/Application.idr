@@ -1,4 +1,4 @@
-module Time.Application
+module Me.Russoul.Time.Application
 
 import Data.String
 import Data.Nat
@@ -8,16 +8,16 @@ import Data.List
 import Data.Either
 import Data.Maybe
 
-import Text.Parser.CharUtil
+import Me.Russoul.Text.Parser.OverChar
 
 import System
 import System.File
 
-import Time.Common
-import Time.Definition
-import Time.Display
-import Time.Evaluation
-import Time.Parser
+import Me.Russoul.Time.Common
+import Me.Russoul.Time.Definition
+import Me.Russoul.Time.Display
+import Me.Russoul.Time.Evaluation
+import Me.Russoul.Time.Parser
 
 doParseFile : String -> Either String (List TimeBlock)
 doParseFile str =

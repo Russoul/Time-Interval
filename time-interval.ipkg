@@ -1,7 +1,7 @@
 package time-interval
 
 authors    = "Russoul"
-depends    = contrib
-main       = Time.Application
+depends    = contrib, just-a-parser
+main       = Me.Russoul.Time.Application
 executable = time-interval
 sourcedir  = "src"

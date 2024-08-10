@@ -1,10 +1,10 @@
-module Time.Parser
+module Me.Russoul.Time.Parser
 
 import Data.String
 
-import Text.Parser.CharUtil
+import Me.Russoul.Text.Parser.OverChar
 
-import Time.Definition
+import Me.Russoul.Time.Definition
 
 ||| Discards whitespace.
 ||| N:N

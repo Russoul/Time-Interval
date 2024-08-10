@@ -1,8 +1,8 @@
-module Time.Display
+module Me.Russoul.Time.Display
 
 import Data.String
 
-import Time.Definition
+import Me.Russoul.Time.Definition
 
 export
 showPadTwo : Integer -> String

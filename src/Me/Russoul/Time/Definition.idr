@@ -1,4 +1,4 @@
-module Time.Definition
+module Me.Russoul.Time.Definition
 
 import Data.List1
 
